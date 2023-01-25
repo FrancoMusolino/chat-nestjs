@@ -14,4 +14,43 @@ model User {
   id String @id @default(auto()) @map("_id") @db.ObjectId
   
   username String @unique
+  password String
+  avatar   String
+  createdAt String
+  updatedAt DateTime @updatedAt
+
+  chatIDs String[] @db.ObjectId
+  chats Chat[] @relation(fields: [chatIDs], references: [id])
+
+  messages Message[]
+
+  @@map("users")
+}
+model Chat {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  
+  title String 
+  createdAt String
+  createdBy String
+
+  userIDs String[] @db.ObjectId
+  users User[] @relation(fields: [userIDs], references: [id])
+
+  messages Message[]
+
+  @@map("chats")
+}
+model Message {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  
+  content String 
+  createdAt String
+
+  userId String @db.ObjectId
+  user User @relation(fields: [userId], references: [id])
+
+  chatId String @db.ObjectId
+  chat Chat @relation(fields: [chatId], references: [id])
+
+  @@map("messages")
 }
