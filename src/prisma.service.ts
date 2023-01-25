@@ -5,6 +5,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { genSalt, hash } from 'bcrypt';
 
 @Injectable()
 export class PrismaService
@@ -13,6 +14,21 @@ export class PrismaService
 {
   async onModuleInit() {
     await this.$connect();
+
+    this.$use(async (params, next) => {
+      const { action, model, args } = params;
+      const isCreateUser = model === 'User' && action === 'create';
+
+      if (isCreateUser) {
+        const user = args.data;
+        const salt = await genSalt(10);
+        const hashedPassword = await hash(user.password, salt);
+
+        args.data = { ...user, password: hashedPassword };
+      }
+
+      return next(params);
+    });
   }
 
   async enableShutdownHooks(app: INestApplication) {

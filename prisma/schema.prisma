@@ -26,6 +26,7 @@ model User {
 
   @@map("users")
 }
+
 model Chat {
   id String @id @default(auto()) @map("_id") @db.ObjectId
   
@@ -40,6 +41,7 @@ model Chat {
 
   @@map("chats")
 }
+
 model Message {
   id String @id @default(auto()) @map("_id") @db.ObjectId
   

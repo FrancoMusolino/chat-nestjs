@@ -1,4 +1,4 @@
-import { MinLength, IsString, Length, Matches, IsUrl } from 'class-validator';
+import { IsString, Length, Matches, IsUrl } from 'class-validator';
 
 export class CreateUserDto {
   @IsString({ message: 'username debe ser un string' })
