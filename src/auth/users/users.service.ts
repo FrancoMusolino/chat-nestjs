@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { PrismaService } from 'src/prisma.service';
-import { UsernameInUseException } from 'src/shared/exceptions';
-import { convertDateToArgTZ } from 'src/shared/helpers';
+import { UsernameInUseException } from 'src/.shared/exceptions';
+import { convertDateToArgTZ } from 'src/.shared/helpers';
 import { CreateUserDto } from './dtos';
 
 @Injectable()

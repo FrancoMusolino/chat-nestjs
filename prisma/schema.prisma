@@ -15,7 +15,7 @@ model User {
   
   username String @unique
   password String
-  avatar   String
+  avatar   String?
   createdAt String
   updatedAt DateTime @updatedAt
 
