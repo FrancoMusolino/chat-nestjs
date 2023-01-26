@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 
 import { PrismaService } from 'src/prisma.service';
 import { UsernameInUseException } from 'src/.shared/exceptions';
@@ -14,7 +14,7 @@ export class UsersService {
     username,
     password,
     avatar,
-  }: CreateUserDto): Promise<any> {
+  }: CreateUserDto): Promise<User> {
     const existUser = await this.getUser({ username });
 
     if (existUser) {
