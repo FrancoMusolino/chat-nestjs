@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 
 import { PrismaService } from 'src/prisma.service';
+import { CreateUserDto } from './dtos';
 import { UsernameInUseException } from 'src/.shared/exceptions';
 import { convertDateToArgTZ } from 'src/.shared/helpers';
-import { CreateUserDto } from './dtos';
 
 @Injectable()
 export class UsersService {
@@ -28,7 +28,13 @@ export class UsersService {
     });
   }
 
-  async getUser(where: Prisma.UserWhereUniqueInput) {
-    return await this.prisma.user.findUnique({ where });
+  async getUser(
+    where: Prisma.UserWhereUniqueInput,
+    include?: Prisma.UserInclude,
+  ) {
+    return await this.prisma.user.findUnique({
+      where,
+      include,
+    });
   }
 }
