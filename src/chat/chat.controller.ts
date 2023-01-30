@@ -10,7 +10,7 @@ export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Post()
-  async createChat(@Req() req, @Body() newChat: CreateChatDto) {
+  async createChat(@Req() req: any, @Body() newChat: CreateChatDto) {
     const { user } = req;
     const { title } = newChat;
 
