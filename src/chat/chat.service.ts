@@ -3,15 +3,20 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import { Chat, Prisma, User } from '@prisma/client';
 
 import { PrismaService } from 'src/prisma.service';
 import { convertDateToArgTZ } from 'src/.shared/helpers';
+import { UsersService } from 'src/auth/users/users.service';
 import { ExtendedCreateChatDto } from './dtos/createChat.dto';
+import { AddIntegrantToChatDto } from './dtos/addIntegrantToChat.dto';
 
 @Injectable()
 export class ChatService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly userService: UsersService,
+  ) {}
 
   async getFirstChatOrThrow(where: Prisma.ChatWhereUniqueInput) {
     return this.prisma.chat.findFirstOrThrow({
@@ -42,6 +47,54 @@ export class ChatService {
     }
   }
 
+  async addIntegrantToChat(
+    chatId: string,
+    { username }: AddIntegrantToChatDto,
+  ) {
+    const chat = await this.getFirstChatOrThrow({ id: chatId }).catch(
+      (error) => {
+        console.log(error);
+        throw new NotFoundException(`Chat con id ${chatId} no encontrado`);
+      },
+    );
+
+    const user = await this.userService
+      .getFirstUserOrThrow({ username })
+      .catch((error) => {
+        console.log(error);
+        throw new NotFoundException(
+          `Usuario con username ${username} no encontrado`,
+        );
+      });
+
+    if (chat.userIDs.includes(user.id)) {
+      throw new ConflictException(
+        `El usuario ${username} ya pertenece al chat`,
+      );
+    }
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const chat = await tx.chat.update({
+          where: { id: chatId },
+          data: {
+            userIDs: { push: user.id },
+          },
+        });
+
+        await tx.user.update({
+          where: { username },
+          data: { chatIDs: { push: chat.id } },
+        });
+
+        return chat;
+      });
+    } catch (error) {
+      console.log(error);
+      throw new ConflictException('Error al añadir el usuario al chat');
+    }
+  }
+
   async leaveChat(chatId: string, user: User) {
     const { id: userId } = user;
 
@@ -52,20 +105,18 @@ export class ChatService {
       },
     );
 
-    if (!chat.userIDs.includes(userId)) {
-      throw new ConflictException('Chat inexistente');
-    }
-
     const newChatIntegrants = chat.userIDs.filter((id) => id !== userId);
 
     const newUserChats = user.chatIDs.filter((id) => id !== chatId);
 
     try {
       return await this.prisma.$transaction(async (tx) => {
+        let chat: Chat;
+
         if (!newChatIntegrants.length) {
-          await tx.chat.delete({ where: { id: chatId } });
+          chat = await tx.chat.delete({ where: { id: chatId } });
         } else {
-          await tx.chat.update({
+          chat = await tx.chat.update({
             where: { id: chatId },
             data: { userIDs: newChatIntegrants },
           });
