@@ -1,17 +1,19 @@
 import {
   Controller,
   Post,
-  Patch,
   Body,
   Req,
   UseGuards,
   Param,
+  HttpCode,
 } from '@nestjs/common';
 
 import { ChatService } from './chat.service';
 import { CreateChatDto } from './dtos/createChat.dto';
 import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
 import { ValidationObjectIdPipe } from 'src/.shared/pipes/ValidationObjectId.pipe';
+import { AddIntegrantToChatDto } from './dtos/addIntegrantToChat.dto';
+import { ChatAuthorizationGuard } from './guards/ChatAuthorization.guard';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -30,7 +32,19 @@ export class ChatController {
     });
   }
 
-  @Patch('abandonar-chat/:ID')
+  @UseGuards(new ChatAuthorizationGuard())
+  @Post(':ID/sumar-integrante')
+  @HttpCode(200)
+  async addIntegrantToChat(
+    @Param('ID', ValidationObjectIdPipe) id: string,
+    @Body() newIntegrant: AddIntegrantToChatDto,
+  ) {
+    return await this.chatService.addIntegrantToChat(id, newIntegrant);
+  }
+
+  @UseGuards(new ChatAuthorizationGuard())
+  @Post(':ID/abandonar-chat')
+  @HttpCode(200)
   async leaveChat(
     @Param('ID', ValidationObjectIdPipe) id: string,
     @Req() req: any,

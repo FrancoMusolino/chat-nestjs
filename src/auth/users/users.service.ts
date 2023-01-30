@@ -10,6 +10,20 @@ import { convertDateToArgTZ } from 'src/.shared/helpers';
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getUser(
+    where: Prisma.UserWhereUniqueInput,
+    include?: Prisma.UserInclude,
+  ) {
+    return await this.prisma.user.findUnique({
+      where,
+      include,
+    });
+  }
+
+  async getFirstUserOrThrow(where: Prisma.UserWhereUniqueInput) {
+    return this.prisma.user.findFirstOrThrow({ where });
+  }
+
   async createUser({
     username,
     password,
@@ -25,16 +39,6 @@ export class UsersService {
 
     return await this.prisma.user.create({
       data: { username, password, avatar, createdAt },
-    });
-  }
-
-  async getUser(
-    where: Prisma.UserWhereUniqueInput,
-    include?: Prisma.UserInclude,
-  ) {
-    return await this.prisma.user.findUnique({
-      where,
-      include,
     });
   }
 }
