@@ -2,8 +2,9 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { Chat, Prisma, User } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 
 import { PrismaService } from 'src/prisma.service';
 import { convertDateToArgTZ } from 'src/.shared/helpers';
@@ -32,17 +33,8 @@ export class ChatService {
     const { createdBy, title, userIDs } = newChat;
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
-        const chat = await tx.chat.create({
-          data: { title, createdAt, createdBy, userIDs },
-        });
-
-        await tx.user.update({
-          where: { username: createdBy },
-          data: { chatIDs: { push: chat.id } },
-        });
-
-        return chat;
+      return await this.prisma.chat.create({
+        data: { title, createdAt, createdBy, userIDs },
       });
     } catch (error) {
       console.log(error);
@@ -77,20 +69,11 @@ export class ChatService {
     }
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
-        const chat = await tx.chat.update({
-          where: { id: chatId },
-          data: {
-            userIDs: { push: user.id },
-          },
-        });
-
-        await tx.user.update({
-          where: { username },
-          data: { chatIDs: { push: chat.id } },
-        });
-
-        return chat;
+      return await this.prisma.chat.update({
+        where: { id: chatId },
+        data: {
+          userIDs: { push: user.id },
+        },
       });
     } catch (error) {
       console.log(error);
@@ -110,27 +93,14 @@ export class ChatService {
 
     const newChatIntegrants = chat.userIDs.filter((id) => id !== userId);
 
-    const newUserChats = user.chatIDs.filter((id) => id !== chatId);
-
     try {
-      return await this.prisma.$transaction(async (tx) => {
-        let chat: Chat;
+      if (!newChatIntegrants.length) {
+        return await this.prisma.chat.delete({ where: { id: chatId } });
+      }
 
-        if (!newChatIntegrants.length) {
-          chat = await tx.chat.delete({ where: { id: chatId } });
-        } else {
-          chat = await tx.chat.update({
-            where: { id: chatId },
-            data: { userIDs: newChatIntegrants },
-          });
-        }
-
-        await tx.user.update({
-          where: { id: userId },
-          data: { chatIDs: newUserChats },
-        });
-
-        return chat;
+      return await this.prisma.chat.update({
+        where: { id: chatId },
+        data: { userIDs: newChatIntegrants },
       });
     } catch (error) {
       console.log(error);
@@ -152,6 +122,28 @@ export class ChatService {
     } catch (error) {
       console.log(error);
       throw new ConflictException('Error al actualizar el chat');
+    }
+  }
+
+  async deleteChat(chatId: string, username: string) {
+    const chat = await this.getFirstChatOrThrow({ id: chatId }).catch(
+      (error) => {
+        console.log(error);
+        throw new NotFoundException(`Chat con id ${chatId} no encontrado`);
+      },
+    );
+
+    if (chat.createdBy !== username) {
+      throw new UnauthorizedException(
+        'Solo el creador del chat puede realizar esta acción',
+      );
+    }
+
+    try {
+      return await this.prisma.chat.delete({ where: { id: chatId } });
+    } catch (error) {
+      console.log(error);
+      throw new ConflictException('Error al eliminar el chat');
     }
   }
 }
