@@ -7,6 +7,7 @@ import {
   Param,
   HttpCode,
   Patch,
+  Delete,
 } from '@nestjs/common';
 
 import { ChatService } from './chat.service';
@@ -61,5 +62,16 @@ export class ChatController {
     @Body() updatedChat: UpdateChatDto,
   ) {
     return await this.chatService.updateChat(id, updatedChat);
+  }
+
+  @UseGuards(ChatAuthorizationGuard)
+  @Delete(':ID')
+  async deleteChat(
+    @Param('ID', ValidationObjectIdPipe) id: string,
+    @Req() req: any,
+  ) {
+    const { user } = req;
+
+    return await this.chatService.deleteChat(id, user.username);
   }
 }

@@ -20,6 +20,16 @@ export class UsersService {
     });
   }
 
+  async getManyUsers(
+    where: Prisma.UserScalarWhereInput,
+    select?: Prisma.UserSelect,
+  ) {
+    return await this.prisma.user.findMany({
+      where,
+      select,
+    });
+  }
+
   async getFirstUserOrThrow(where: Prisma.UserWhereUniqueInput) {
     return this.prisma.user.findFirstOrThrow({ where });
   }
