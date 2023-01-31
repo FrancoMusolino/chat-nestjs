@@ -6,14 +6,14 @@ import {
   UseGuards,
   Param,
   HttpCode,
+  Patch,
 } from '@nestjs/common';
 
 import { ChatService } from './chat.service';
-import { CreateChatDto } from './dtos/createChat.dto';
-import { JwtAuthGuard } from 'src/auth/guards/auth.guard';
-import { ValidationObjectIdPipe } from 'src/.shared/pipes/ValidationObjectId.pipe';
-import { AddIntegrantToChatDto } from './dtos/addIntegrantToChat.dto';
-import { ChatAuthorizationGuard } from './guards/ChatAuthorization.guard';
+import { JwtAuthGuard } from 'src/auth/guards';
+import { ValidationObjectIdPipe } from 'src/.shared/pipes';
+import { ChatAuthorizationGuard } from './guards';
+import { AddIntegrantToChatDto, CreateChatDto, UpdateChatDto } from './dtos';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -32,7 +32,7 @@ export class ChatController {
     });
   }
 
-  @UseGuards(new ChatAuthorizationGuard())
+  @UseGuards(ChatAuthorizationGuard)
   @Post(':ID/sumar-integrante')
   @HttpCode(200)
   async addIntegrantToChat(
@@ -42,7 +42,7 @@ export class ChatController {
     return await this.chatService.addIntegrantToChat(id, newIntegrant);
   }
 
-  @UseGuards(new ChatAuthorizationGuard())
+  @UseGuards(ChatAuthorizationGuard)
   @Post(':ID/abandonar-chat')
   @HttpCode(200)
   async leaveChat(
@@ -52,5 +52,14 @@ export class ChatController {
     const { user } = req;
 
     return await this.chatService.leaveChat(id, user);
+  }
+
+  @UseGuards(ChatAuthorizationGuard)
+  @Patch(':ID')
+  async updateChat(
+    @Param('ID', ValidationObjectIdPipe) id: string,
+    @Body() updatedChat: UpdateChatDto,
+  ) {
+    return await this.chatService.updateChat(id, updatedChat);
   }
 }
