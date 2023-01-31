@@ -8,8 +8,11 @@ import { Chat, Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { convertDateToArgTZ } from 'src/.shared/helpers';
 import { UsersService } from 'src/auth/users/users.service';
-import { ExtendedCreateChatDto } from './dtos/createChat.dto';
-import { AddIntegrantToChatDto } from './dtos/addIntegrantToChat.dto';
+import {
+  ExtendedCreateChatDto,
+  AddIntegrantToChatDto,
+  UpdateChatDto,
+} from './dtos';
 
 @Injectable()
 export class ChatService {
@@ -132,6 +135,23 @@ export class ChatService {
     } catch (error) {
       console.log(error);
       throw new ConflictException('Error al abandonar el chat');
+    }
+  }
+
+  async updateChat(chatId: string, { title }: UpdateChatDto) {
+    await this.getFirstChatOrThrow({ id: chatId }).catch((error) => {
+      console.log(error);
+      throw new NotFoundException(`Chat con id ${chatId} no encontrado`);
+    });
+
+    try {
+      return await this.prisma.chat.update({
+        where: { id: chatId },
+        data: { title },
+      });
+    } catch (error) {
+      console.log(error);
+      throw new ConflictException('Error al actualizar el chat');
     }
   }
 }
