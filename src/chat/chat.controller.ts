@@ -14,7 +14,12 @@ import { ChatService } from './chat.service';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { ValidationObjectIdPipe } from 'src/.shared/pipes';
 import { ChatAuthorizationGuard } from './guards';
-import { AddIntegrantToChatDto, CreateChatDto, UpdateChatDto } from './dtos';
+import {
+  AddIntegrantToChatDto,
+  CreateChatDto,
+  PushOutFromChatDto,
+  UpdateChatDto,
+} from './dtos';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -53,6 +58,19 @@ export class ChatController {
     const { user } = req;
 
     return await this.chatService.leaveChat(id, user);
+  }
+
+  @UseGuards(ChatAuthorizationGuard)
+  @Post(':ID/expulsar-chat')
+  @HttpCode(200)
+  async pushOutFromChat(
+    @Param('ID', ValidationObjectIdPipe) id: string,
+    @Body() integrantPushedOut: PushOutFromChatDto,
+    @Req() req: any,
+  ) {
+    const { user } = req;
+
+    return await this.chatService.pushOutFromChat(id, user, integrantPushedOut);
   }
 
   @UseGuards(ChatAuthorizationGuard)
