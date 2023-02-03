@@ -15,17 +15,31 @@ import {
   UpdateChatDto,
   PushOutFromChatDto,
 } from './dtos';
+import { ExtendedCreateMessageDto } from './messages/dtos';
+import { MessagesService } from './messages/messages.service';
 
 @Injectable()
 export class ChatService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly userService: UsersService,
+    private readonly messageService: MessagesService,
   ) {}
 
   async getFirstChatOrThrow(where: Prisma.ChatWhereUniqueInput) {
-    return this.prisma.chat.findFirstOrThrow({
+    return await this.prisma.chat.findFirstOrThrow({
       where,
+    });
+  }
+
+  async getChat(where: Prisma.ChatWhereUniqueInput) {
+    return await this.prisma.chat.findUnique({
+      where,
+      include: {
+        messages: true,
+        users: { select: { id: true, username: true, avatar: true } },
+        _count: { select: { users: true } },
+      },
     });
   }
 
@@ -50,6 +64,15 @@ export class ChatService {
       console.log(error);
       throw new ConflictException('Error al crear el chat');
     }
+  }
+
+  async submitMessage({ chatId, ...message }: ExtendedCreateMessageDto) {
+    await this.getFirstChatOrThrow({ id: chatId }).catch((error) => {
+      console.log(error);
+      throw new NotFoundException(`Chat con id ${chatId} no encontrado`);
+    });
+
+    return await this.messageService.createMessage({ chatId, ...message });
   }
 
   async addIntegrantToChat(
