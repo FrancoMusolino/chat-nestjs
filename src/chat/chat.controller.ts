@@ -8,6 +8,7 @@ import {
   HttpCode,
   Patch,
   Delete,
+  Get,
 } from '@nestjs/common';
 
 import { ChatService } from './chat.service';
@@ -20,11 +21,18 @@ import {
   PushOutFromChatDto,
   UpdateChatDto,
 } from './dtos';
+import { CreateMessageDto } from './messages/dtos';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
+
+  @UseGuards(ChatAuthorizationGuard)
+  @Get(':ID')
+  async getChat(@Param('ID', ValidationObjectIdPipe) chatId: string) {
+    return await this.chatService.getChat({ id: chatId });
+  }
 
   @Post()
   async createChat(@Body() newChat: CreateChatDto, @Req() req: any) {
@@ -35,6 +43,23 @@ export class ChatController {
       title,
       createdBy: user.username,
       userIDs: [user.id],
+    });
+  }
+
+  @UseGuards(ChatAuthorizationGuard)
+  @Post(':ID/enviar-mensaje')
+  async submitMessage(
+    @Param('ID', ValidationObjectIdPipe) chatId: string,
+    @Body() newMessage: CreateMessageDto,
+    @Req() req: any,
+  ) {
+    const { user } = req;
+    const { content } = newMessage;
+
+    return await this.chatService.submitMessage({
+      content,
+      userId: user.id,
+      chatId,
     });
   }
 

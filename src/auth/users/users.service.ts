@@ -9,14 +9,14 @@ import { convertDateToArgTZ } from 'src/.shared/helpers';
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
+  async getFirstUserOrThrow(where: Prisma.UserWhereUniqueInput) {
+    return this.prisma.user.findFirstOrThrow({ where });
+  }
 
-  async getUser(
-    where: Prisma.UserWhereUniqueInput,
-    include?: Prisma.UserInclude,
-  ) {
+  async getUser(where: Prisma.UserWhereUniqueInput) {
     return await this.prisma.user.findUnique({
       where,
-      include,
+      include: { chats: true, messages: true },
     });
   }
 
@@ -28,10 +28,6 @@ export class UsersService {
       where,
       select,
     });
-  }
-
-  async getFirstUserOrThrow(where: Prisma.UserWhereUniqueInput) {
-    return this.prisma.user.findFirstOrThrow({ where });
   }
 
   async createUser({

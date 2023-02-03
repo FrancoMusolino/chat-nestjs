@@ -11,7 +11,7 @@ export class UsersController {
 
   @Get(':ID')
   async getUser(@Param('ID') id: string) {
-    return await this.userService.getUser({ id }, { chats: true });
+    return await this.userService.getUser({ id });
   }
 
   @UseGuards(JwtAuthGuard)
