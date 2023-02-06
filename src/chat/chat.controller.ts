@@ -42,7 +42,6 @@ export class ChatController {
     return await this.chatService.createChat({
       title,
       createdBy: user.username,
-      userIDs: [user.id],
     });
   }
 
