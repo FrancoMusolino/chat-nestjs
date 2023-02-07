@@ -42,6 +42,18 @@ export class PrismaService
 
       return next(params);
     });
+
+    this.$use(async (params, next) => {
+      const { action, model } = params;
+      const isDeleteMessage = model === 'Message' && action === 'delete';
+
+      if (isDeleteMessage) {
+        params.action = 'update';
+        params.args['data'] = { deleted: true, content: 'Mensaje eliminado' };
+      }
+
+      return next(params);
+    });
   }
 
   async enableShutdownHooks(app: INestApplication) {
