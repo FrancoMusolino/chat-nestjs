@@ -43,22 +43,17 @@ export class ChatService {
     });
   }
 
-  async createChat(newChat: ExtendedCreateChatDto) {
+  async createChat({ createdBy, title }: ExtendedCreateChatDto) {
     const createdAt = convertDateToArgTZ(new Date());
-    const { createdBy, title, userIDs } = newChat;
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
-        const chat = await tx.chat.create({
-          data: { title, createdAt, createdBy, userIDs },
-        });
-
-        await tx.user.update({
-          where: { username: createdBy },
-          data: { chatIDs: { push: chat.id } },
-        });
-
-        return chat;
+      return await this.prisma.chat.create({
+        data: {
+          title,
+          createdAt,
+          createdBy,
+          users: { connect: { username: createdBy } },
+        },
       });
     } catch (error) {
       console.log(error);
@@ -102,20 +97,16 @@ export class ChatService {
     }
 
     try {
-      const [updatedChat] = await this.prisma.$transaction([
-        this.prisma.chat.update({
-          where: { id: chatId },
-          data: {
-            userIDs: { push: user.id },
+      return await this.prisma.chat.update({
+        where: { id: chatId },
+        data: {
+          users: {
+            connect: {
+              id: user.id,
+            },
           },
-        }),
-        this.prisma.user.update({
-          where: { username },
-          data: { chatIDs: { push: chatId } },
-        }),
-      ]);
-
-      return updatedChat;
+        },
+      });
     } catch (error) {
       console.log(error);
       throw new ConflictException('Error al añadir el usuario al chat');
@@ -134,23 +125,25 @@ export class ChatService {
 
     const newChatIntegrants = chat.userIDs.filter((id) => id !== userId);
 
-    const newUserChats = user.chatIDs.filter((id) => id !== chatId);
-
     try {
-      const [chat] = await this.prisma.$transaction([
-        !newChatIntegrants.length
-          ? this.prisma.chat.delete({ where: { id: chatId } })
-          : this.prisma.chat.update({
-              where: { id: chatId },
-              data: { userIDs: newChatIntegrants },
-            }),
-        this.prisma.user.update({
-          where: { id: userId },
-          data: { chatIDs: newUserChats },
-        }),
-      ]);
+      if (!newChatIntegrants.length) {
+        const newUserChats = user.chatIDs.filter((id) => id !== chatId);
 
-      return chat;
+        const [chat] = await this.prisma.$transaction([
+          this.prisma.chat.delete({ where: { id: chatId } }),
+          this.prisma.user.update({
+            where: { id: userId },
+            data: { chatIDs: newUserChats },
+          }),
+        ]);
+
+        return chat;
+      }
+
+      return await this.prisma.chat.update({
+        where: { id: chatId },
+        data: { users: { disconnect: { id: userId } } },
+      });
     } catch (error) {
       console.log(error);
       throw new ConflictException('Error al abandonar el chat');
@@ -190,27 +183,11 @@ export class ChatService {
       );
     }
 
-    const newChatIntegrants = chat.userIDs.filter(
-      (id) => id !== userToPushOut.id,
-    );
-
-    const newUserToPushOutChats = userToPushOut.chatIDs.filter(
-      (id) => id !== chatId,
-    );
-
     try {
-      const [updatedChat] = await this.prisma.$transaction([
-        this.prisma.chat.update({
-          where: { id: chatId },
-          data: { userIDs: newChatIntegrants },
-        }),
-        this.prisma.user.update({
-          where: { username: userToPushOut.username },
-          data: { chatIDs: newUserToPushOutChats },
-        }),
-      ]);
-
-      return updatedChat;
+      return await this.prisma.chat.update({
+        where: { id: chatId },
+        data: { users: { disconnect: { username: userToPushOut.username } } },
+      });
     } catch (error) {
       console.log(error);
       throw new ConflictException('Error al expulsar del chat');

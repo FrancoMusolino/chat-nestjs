@@ -11,10 +11,6 @@ class AdditionalChatInfo {
   @IsNotEmpty({ message: 'createdBy es un campo obligatorio' })
   @IsString({ message: 'createdBy debe ser un string' })
   createdBy: string;
-
-  @IsArray({ message: 'userIDs debe ser un string' })
-  @ArrayNotEmpty({ message: 'userIDs no puede estar vacío' })
-  userIDs: string[];
 }
 
 export class ExtendedCreateChatDto extends IntersectionType(
