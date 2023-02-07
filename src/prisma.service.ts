@@ -29,6 +29,19 @@ export class PrismaService
 
       return next(params);
     });
+
+    this.$use(async (params, next) => {
+      const { action, model, args } = params;
+      const isDeleteChat = model === 'Chat' && action === 'delete';
+
+      if (isDeleteChat) {
+        const { id } = args.where;
+
+        await this.message.deleteMany({ where: { chatId: id } });
+      }
+
+      return next(params);
+    });
   }
 
   async enableShutdownHooks(app: INestApplication) {
