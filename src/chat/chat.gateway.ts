@@ -13,7 +13,7 @@ import { Server, Socket } from 'socket.io';
 import { ValidationObjectIdPipe } from 'src/.shared/pipes';
 import { ExtendedCreateMessageDto } from './messages/dtos';
 
-@WebSocketGateway(8001, { cors: '*' })
+@WebSocketGateway(8080, { cors: '*' })
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
@@ -24,8 +24,7 @@ export class ChatGateway
   }
 
   handleConnection(client: any, ...args: any[]) {
-    console.log({ client });
-    console.log(`Nuevo cliente ${client.id} desconectado`);
+    console.log(`Nuevo cliente ${client.id} conectado`);
   }
 
   handleDisconnect(client: any) {
@@ -38,6 +37,7 @@ export class ChatGateway
     @MessageBody('chatId', ValidationObjectIdPipe) chatId: string,
     @ConnectedSocket() client: Socket,
   ) {
+    console.log(`Uniéndose al chat ${chatId}`);
     client.join(`chat_${chatId}`);
   }
 
@@ -46,6 +46,7 @@ export class ChatGateway
     @MessageBody('chatId', ValidationObjectIdPipe) chatId: string,
     @ConnectedSocket() client: Socket,
   ) {
+    console.log(`Dejando el chat ${chatId}`);
     client.leave(`chat_${chatId}`);
   }
 
