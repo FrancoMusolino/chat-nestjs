@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { compare } from 'bcrypt';
+import { JwtPayload } from 'src/.shared/types';
 
 import { LoginDto, RegisterDto } from './dtos';
 import { UsersService } from './users/users.service';
@@ -16,7 +17,7 @@ export class AuthService {
     private readonly jwt: JwtService,
   ) {}
 
-  private signToken(payload: { id: string; username: string }) {
+  private signToken(payload: JwtPayload) {
     return this.jwt.sign(payload);
   }
 

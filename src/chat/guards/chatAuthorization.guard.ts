@@ -4,17 +4,32 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class ChatAuthorizationGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
+    let user: any;
+    let chatId: string;
 
-    const { user } = request;
-    const { ID } = request.params;
+    const isHttp = context.getType().includes('http');
 
-    if (!user.chatIDs || !user.chatIDs.includes(ID)) {
-      throw new UnauthorizedException('No perteneces a este chat');
+    if (isHttp) {
+      const request = context.switchToHttp().getRequest();
+      user = request.user;
+      chatId = request.params.ID;
+    } else {
+      const client = context.switchToWs().getClient();
+      const data = context.switchToWs().getData();
+
+      user = client.user;
+      chatId = data.chatId;
+    }
+
+    if (!user.chatIDs || !user.chatIDs.includes(chatId)) {
+      throw isHttp
+        ? new UnauthorizedException('No perteneces a este chat')
+        : new WsException('No perteneces a este chat');
     }
 
     return true;

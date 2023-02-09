@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 import { UsersService } from './users/users.service';
+import { JwtPayload } from 'src/.shared/types';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -18,7 +19,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { id: string; username: string }) {
+  async validate(payload: JwtPayload) {
     const { id, username } = payload;
     const existUser = await this.userService.getUser({ id });
 
