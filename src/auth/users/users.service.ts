@@ -1,8 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 
 import { PrismaService } from 'src/prisma.service';
-import { CreateUserDto } from './dtos';
+import { CreateUserDto, ExtendedUpdateUserDto } from './dtos';
 import { UsernameInUseException } from 'src/.shared/exceptions';
 import { convertDateToArgTZ } from 'src/.shared/helpers';
 
@@ -46,5 +50,22 @@ export class UsersService {
     return await this.prisma.user.create({
       data: { username, password, avatar, createdAt },
     });
+  }
+
+  async updateUser(
+    where: Prisma.UserWhereUniqueInput,
+    data: ExtendedUpdateUserDto,
+  ) {
+    await this.getFirstUserOrThrow(where).catch((error) => {
+      console.log(error);
+      throw new NotFoundException('Usuario no encontrado');
+    });
+
+    try {
+      return await this.prisma.user.update({ where, data });
+    } catch (error) {
+      console.log(error);
+      throw new ConflictException('Error actualizando al usuario');
+    }
   }
 }

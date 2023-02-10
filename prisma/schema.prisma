@@ -16,6 +16,9 @@ model User {
   username String @unique
   password String
   avatar   String?
+  connected Boolean @default(false)
+  lastConnection String? 
+
   createdAt String
   updatedAt DateTime @updatedAt
 

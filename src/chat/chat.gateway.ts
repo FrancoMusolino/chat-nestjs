@@ -10,8 +10,11 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { convertDateToArgTZ } from 'src/.shared/helpers';
 
 import { ValidationObjectIdPipe } from 'src/.shared/pipes';
+import { SocketWithAuth } from 'src/.shared/types';
+import { UsersService } from 'src/auth/users/users.service';
 import { ChatAuthorizationGuard } from './guards';
 import { ExtendedCreateMessageDto } from './messages/dtos';
 
@@ -19,17 +22,35 @@ import { ExtendedCreateMessageDto } from './messages/dtos';
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
+  constructor(private readonly userService: UsersService) {}
+
   @WebSocketServer() server: Server;
 
   afterInit(server: any) {
     console.log('WS Server inicializado');
   }
 
-  handleConnection(client: any, ...args: any[]) {
+  handleConnection(client: SocketWithAuth, ...args: any[]) {
+    const { user } = client;
+
+    this.userService.updateUser(
+      { id: user.id },
+      { connected: true, lastConnection: null },
+    );
+
     console.log(`Nuevo cliente ${client.id} conectado`);
   }
 
-  handleDisconnect(client: any) {
+  handleDisconnect(client: SocketWithAuth) {
+    const { user } = client;
+
+    const lastConnection = String(convertDateToArgTZ(new Date()));
+
+    this.userService.updateUser(
+      { id: user.id },
+      { connected: false, lastConnection },
+    );
+
     console.log(`Cliente ${client.id} desconectado`);
   }
 
