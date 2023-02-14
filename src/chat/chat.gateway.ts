@@ -10,8 +10,8 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { convertDateToArgTZ } from 'src/.shared/helpers';
 
+import { DateTime } from 'src/.shared/helpers';
 import { ValidationObjectIdPipe } from 'src/.shared/pipes';
 import { SocketWithAuth } from 'src/.shared/types';
 import { UsersService } from 'src/auth/users/users.service';
@@ -44,7 +44,7 @@ export class ChatGateway
   handleDisconnect(client: SocketWithAuth) {
     const { user } = client;
 
-    const lastConnection = String(convertDateToArgTZ(new Date()));
+    const lastConnection = String(DateTime.now().date);
 
     this.userService.updateUser(
       { id: user.id },

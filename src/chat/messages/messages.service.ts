@@ -7,7 +7,6 @@ import {
 
 import { PrismaService } from 'src/prisma.service';
 import { ExtendedCreateMessageDto } from './dtos';
-import { convertDateToArgTZ } from 'src/.shared/helpers';
 import { Prisma, User } from '@prisma/client';
 
 @Injectable()
@@ -19,13 +18,10 @@ export class MessagesService {
   }
 
   async createMessage({ content, userId, chatId }: ExtendedCreateMessageDto) {
-    const createdAt = convertDateToArgTZ(new Date());
-
     try {
       return this.prisma.message.create({
         data: {
           content,
-          createdAt,
           chat: { connect: { id: chatId } },
           user: { connect: { id: userId } },
         },

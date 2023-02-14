@@ -19,7 +19,7 @@ model User {
   connected Boolean @default(false)
   lastConnection String? 
 
-  createdAt String
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   chatIDs String[] @db.ObjectId
@@ -35,8 +35,8 @@ model Chat {
   
   title String
   description String? 
-  createdAt String
   createdBy String
+  createdAt DateTime @default(now())
 
   userIDs String[] @db.ObjectId
   users User[] @relation(fields: [userIDs], references: [id])
@@ -51,7 +51,7 @@ model Message {
   
   content String
   deleted Boolean  @default(false) 
-  createdAt String
+  createdAt DateTime @default(now())
 
   userId String @db.ObjectId
   user User @relation(fields: [userId], references: [id])
