@@ -1,10 +1,14 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { IntersectionType } from '@nestjs/swagger';
 
 export class CreateChatDto {
   @IsNotEmpty({ message: 'title es un campo obligatorio' })
   @IsString({ message: 'title debe ser un string' })
   title: string;
+
+  @IsOptional()
+  @IsString({ message: 'description debe ser un string' })
+  description?: string;
 }
 
 class AdditionalChatInfo {
