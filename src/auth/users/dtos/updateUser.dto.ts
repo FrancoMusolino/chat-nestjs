@@ -4,11 +4,11 @@ import { IsBoolean, IsDateString, IsOptional } from 'class-validator';
 import { CreateUserDto } from './createUser.dto';
 
 class UpdateUserDto {
-  @IsOptional({ message: 'connected es un campo opcional' })
+  @IsOptional()
   @IsBoolean({ message: 'connected debe ser un boolean' })
   connected?: boolean;
 
-  @IsOptional({ message: 'lastConnection es un campo opcional' })
+  @IsOptional()
   @IsDateString(
     { strict: true },
     {

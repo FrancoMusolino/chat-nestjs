@@ -43,13 +43,14 @@ export class ChatService {
     });
   }
 
-  async createChat({ createdBy, title }: ExtendedCreateChatDto) {
+  async createChat({ createdBy, title, description }: ExtendedCreateChatDto) {
     const createdAt = convertDateToArgTZ(new Date());
 
     try {
       return await this.prisma.chat.create({
         data: {
           title,
+          description,
           createdAt,
           createdBy,
           users: { connect: { username: createdBy } },
@@ -194,7 +195,7 @@ export class ChatService {
     }
   }
 
-  async updateChat(chatId: string, { title }: UpdateChatDto) {
+  async updateChat(chatId: string, data: UpdateChatDto) {
     await this.getFirstChatOrThrow({ id: chatId }).catch((error) => {
       console.log(error);
       throw new NotFoundException(`Chat con id ${chatId} no encontrado`);
@@ -203,7 +204,7 @@ export class ChatService {
     try {
       return await this.prisma.chat.update({
         where: { id: chatId },
-        data: { title },
+        data,
       });
     } catch (error) {
       console.log(error);

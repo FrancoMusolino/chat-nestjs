@@ -37,10 +37,9 @@ export class ChatController {
   @Post()
   async createChat(@Body() newChat: CreateChatDto, @Req() req: any) {
     const { user } = req;
-    const { title } = newChat;
 
     return await this.chatService.createChat({
-      title,
+      ...newChat,
       createdBy: user.username,
     });
   }
