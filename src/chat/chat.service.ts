@@ -7,7 +7,6 @@ import {
 import { Prisma, User } from '@prisma/client';
 
 import { PrismaService } from 'src/prisma.service';
-import { convertDateToArgTZ } from 'src/.shared/helpers';
 import { UsersService } from 'src/auth/users/users.service';
 import {
   ExtendedCreateChatDto,
@@ -44,14 +43,11 @@ export class ChatService {
   }
 
   async createChat({ createdBy, title, description }: ExtendedCreateChatDto) {
-    const createdAt = convertDateToArgTZ(new Date());
-
     try {
       return await this.prisma.chat.create({
         data: {
           title,
           description,
-          createdAt,
           createdBy,
           users: { connect: { username: createdBy } },
         },

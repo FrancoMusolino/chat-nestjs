@@ -8,7 +8,6 @@ import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { CreateUserDto, ExtendedUpdateUserDto } from './dtos';
 import { UsernameInUseException } from 'src/.shared/exceptions';
-import { convertDateToArgTZ } from 'src/.shared/helpers';
 
 @Injectable()
 export class UsersService {
@@ -45,10 +44,8 @@ export class UsersService {
       throw new UsernameInUseException(username);
     }
 
-    const createdAt = convertDateToArgTZ(new Date());
-
     return await this.prisma.user.create({
-      data: { username, password, avatar, createdAt },
+      data: { username, password, avatar },
     });
   }
 
