@@ -3,7 +3,11 @@ import { IsBoolean, IsDateString, IsOptional } from 'class-validator';
 
 import { CreateUserDto } from './createUser.dto';
 
-class UpdateUserDto {
+export class UpdateUserDto extends PartialType(
+  PickType(CreateUserDto, ['avatar', 'status'] as const),
+) {}
+
+export class ExtendedUpdateUserDto extends UpdateUserDto {
   @IsOptional()
   @IsBoolean({ message: 'connected debe ser un boolean' })
   connected?: boolean;
@@ -18,8 +22,3 @@ class UpdateUserDto {
   )
   lastConnection?: string;
 }
-
-export class ExtendedUpdateUserDto extends IntersectionType(
-  PartialType(PickType(CreateUserDto, ['avatar'] as const)),
-  UpdateUserDto,
-) {}
