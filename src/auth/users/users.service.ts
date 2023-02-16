@@ -6,7 +6,7 @@ import {
 import { Prisma, User } from '@prisma/client';
 
 import { PrismaService } from 'src/prisma.service';
-import { CreateUserDto, ExtendedUpdateUserDto } from './dtos';
+import { CreateUserDto, ExtendedUpdateUserDto, UpdateUserDto } from './dtos';
 import { UsernameInUseException } from 'src/.shared/exceptions';
 
 @Injectable()
@@ -37,6 +37,7 @@ export class UsersService {
     username,
     password,
     avatar,
+    status,
   }: CreateUserDto): Promise<User> {
     const existUser = await this.getUser({ username });
 
@@ -45,7 +46,7 @@ export class UsersService {
     }
 
     return await this.prisma.user.create({
-      data: { username, password, avatar },
+      data: { username, password, avatar, status },
     });
   }
 
@@ -59,7 +60,12 @@ export class UsersService {
     });
 
     try {
-      return await this.prisma.user.update({ where, data });
+      const { password, ...user } = await this.prisma.user.update({
+        where,
+        data,
+      });
+
+      return user;
     } catch (error) {
       console.log(error);
       throw new ConflictException('Error actualizando al usuario');

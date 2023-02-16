@@ -1,8 +1,17 @@
-import { Body, Controller, Post, Get, Param, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Get,
+  Param,
+  UseGuards,
+  Patch,
+} from '@nestjs/common';
+import { ValidationObjectIdPipe } from 'src/.shared/pipes';
 
 import { JwtAuthGuard } from './../guards';
 
-import { CreateUserDto } from './dtos';
+import { CreateUserDto, UpdateUserDto } from './dtos';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -14,9 +23,18 @@ export class UsersController {
     return await this.userService.getUser({ id });
   }
 
+  // @UseGuards(JwtAuthGuard)
+  // @Post()
+  // async create(@Body() newUser: CreateUserDto) {
+  //   return await this.userService.createUser(newUser);
+  // }
+
   @UseGuards(JwtAuthGuard)
-  @Post()
-  async create(@Body() user: CreateUserDto) {
-    return await this.userService.createUser(user);
+  @Patch(':ID')
+  async updateUser(
+    @Param('ID', ValidationObjectIdPipe) id: string,
+    @Body() updatedUser: UpdateUserDto,
+  ) {
+    return await this.userService.updateUser({ id }, updatedUser);
   }
 }

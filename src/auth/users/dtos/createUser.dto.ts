@@ -1,4 +1,11 @@
-import { IsString, Length, Matches, IsUrl, IsOptional } from 'class-validator';
+import {
+  IsString,
+  Length,
+  Matches,
+  IsUrl,
+  IsOptional,
+  MaxLength,
+} from 'class-validator';
 
 import { passwordRegExp } from 'src/.shared/utils';
 
@@ -19,7 +26,12 @@ export class CreateUserDto {
   @IsOptional()
   @IsUrl(
     { protocols: ['https'] },
-    { message: 'Debe ser una URL con protocolo https' },
+    { message: 'avatar debe ser una URL con protocolo https' },
   )
   avatar?: string;
+
+  @IsOptional()
+  @IsString({ message: 'status debe ser un string' })
+  @MaxLength(150, { message: 'Máximo de 150 caracteres' })
+  status?: string;
 }

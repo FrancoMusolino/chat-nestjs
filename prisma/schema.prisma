@@ -15,6 +15,7 @@ model User {
   
   username String @unique
   password String
+  status String? @default("...")
   avatar   String?
   connected Boolean @default(false)
   lastConnection String? 
