@@ -36,18 +36,24 @@ export class ChatService {
       where,
       include: {
         messages: true,
-        users: { select: { id: true, username: true, avatar: true } },
+        users: { select: { id: true, username: true, profilePicture: true } },
         _count: { select: { users: true } },
       },
     });
   }
 
-  async createChat({ createdBy, title, description }: ExtendedCreateChatDto) {
+  async createChat({
+    createdBy,
+    title,
+    description,
+    avatar,
+  }: ExtendedCreateChatDto) {
     try {
       return await this.prisma.chat.create({
         data: {
           title,
           description,
+          avatar,
           createdBy,
           users: { connect: { username: createdBy } },
         },

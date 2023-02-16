@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
 import { IntersectionType } from '@nestjs/swagger';
 
 export class CreateChatDto {
@@ -9,6 +9,13 @@ export class CreateChatDto {
   @IsOptional()
   @IsString({ message: 'description debe ser un string' })
   description?: string;
+
+  @IsOptional()
+  @IsUrl(
+    { protocols: ['https'] },
+    { message: 'avatar debe ser una URL con protocolo https' },
+  )
+  avatar?: string;
 }
 
 class AdditionalChatInfo {

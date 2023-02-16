@@ -26,9 +26,9 @@ export class CreateUserDto {
   @IsOptional()
   @IsUrl(
     { protocols: ['https'] },
-    { message: 'avatar debe ser una URL con protocolo https' },
+    { message: 'profilePicture debe ser una URL con protocolo https' },
   )
-  avatar?: string;
+  profilePicture?: string;
 
   @IsOptional()
   @IsString({ message: 'status debe ser un string' })

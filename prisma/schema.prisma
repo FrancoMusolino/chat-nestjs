@@ -16,7 +16,7 @@ model User {
   username String @unique
   password String
   status String? @default("...")
-  avatar   String?
+  profilePicture  String?
   connected Boolean @default(false)
   lastConnection String? 
 
@@ -36,6 +36,7 @@ model Chat {
   
   title String
   description String? 
+  avatar String? 
   createdBy String
   createdAt DateTime @default(now())
 
