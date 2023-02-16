@@ -36,7 +36,7 @@ export class UsersService {
   async createUser({
     username,
     password,
-    avatar,
+    profilePicture,
     status,
   }: CreateUserDto): Promise<User> {
     const existUser = await this.getUser({ username });
@@ -46,7 +46,7 @@ export class UsersService {
     }
 
     return await this.prisma.user.create({
-      data: { username, password, avatar, status },
+      data: { username, password, profilePicture, status },
     });
   }
 

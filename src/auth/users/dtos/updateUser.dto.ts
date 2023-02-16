@@ -4,7 +4,7 @@ import { IsBoolean, IsDateString, IsOptional } from 'class-validator';
 import { CreateUserDto } from './createUser.dto';
 
 export class UpdateUserDto extends PartialType(
-  PickType(CreateUserDto, ['avatar', 'status'] as const),
+  PickType(CreateUserDto, ['profilePicture', 'status'] as const),
 ) {}
 
 export class ExtendedUpdateUserDto extends UpdateUserDto {
