@@ -4,9 +4,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { compare } from 'bcrypt';
 import { JwtPayload } from 'src/.shared/types';
 
+import { UserDeletedException } from './../.shared/exceptions';
+import { BcryptService } from './bcrypt/bcrypt.service';
 import { LoginDto, RegisterDto } from './dtos';
 import { UsersService } from './users/users.service';
 
@@ -15,6 +16,7 @@ export class AuthService {
   constructor(
     private readonly userService: UsersService,
     private readonly jwt: JwtService,
+    private readonly bcrypt: BcryptService,
   ) {}
 
   private signToken(payload: JwtPayload) {
@@ -39,9 +41,13 @@ export class AuthService {
       throw new NotFoundException(`Usuario ${username} no encontrado`);
     }
 
+    if (existUser.deleted) {
+      throw new UserDeletedException(username);
+    }
+
     const { password: hashPassword, id, ...user } = existUser;
 
-    const isValidPassword = await compare(password, hashPassword);
+    const isValidPassword = await this.bcrypt.validate(password, hashPassword);
 
     if (!isValidPassword) {
       throw new UnauthorizedException('Las credenciales son inválidas');

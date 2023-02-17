@@ -16,6 +16,7 @@ import {
 } from './dtos';
 import { ExtendedCreateMessageDto } from './messages/dtos';
 import { MessagesService } from './messages/messages.service';
+import { UserDeletedException } from 'src/.shared/exceptions';
 
 @Injectable()
 export class ChatService {
@@ -92,6 +93,10 @@ export class ChatService {
           `Usuario con username ${username} no encontrado`,
         );
       });
+
+    if (user.deleted) {
+      throw new UserDeletedException(user.username);
+    }
 
     if (chat.userIDs.includes(user.id)) {
       throw new ConflictException(
@@ -235,19 +240,14 @@ export class ChatService {
       { username: true, chatIDs: true },
     );
 
-    const usersUpdatedChatIDs = chatIntegrants.map((integrant) => ({
-      ...integrant,
-      chatIDs: integrant.chatIDs.filter((id) => id !== chatId),
-    }));
-
     try {
       const [deletedChat] = await this.prisma.$transaction(
         [
           this.prisma.chat.delete({ where: { id: chatId } }),
-          usersUpdatedChatIDs.map((user) =>
+          chatIntegrants.map((user) =>
             this.prisma.user.update({
               where: { username: user.username },
-              data: { chatIDs: user.chatIDs },
+              data: { chats: { disconnect: { id: chatId } } },
             }),
           ),
         ].flat(),
