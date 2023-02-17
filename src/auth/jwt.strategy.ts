@@ -5,6 +5,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 
 import { UsersService } from './users/users.service';
 import { JwtPayload } from 'src/.shared/types';
+import { UserDeletedException } from 'src/.shared/exceptions';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -25,6 +26,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     if (!existUser) {
       throw new NotFoundException(`El usuario ${username} no existe`);
+    }
+
+    if (existUser.deleted) {
+      throw new UserDeletedException(username);
     }
 
     const { password, ...rest } = existUser;

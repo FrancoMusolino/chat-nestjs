@@ -1,7 +1,7 @@
 import {
   Body,
   Controller,
-  Post,
+  Delete,
   Get,
   Param,
   UseGuards,
@@ -11,7 +11,8 @@ import { ValidationObjectIdPipe } from 'src/.shared/pipes';
 
 import { JwtAuthGuard } from './../guards';
 
-import { CreateUserDto, UpdateUserDto } from './dtos';
+import { DeleteUserDto, UpdateUserDto } from './dtos';
+import { UserAuthorizationGuard } from './guards';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -23,18 +24,21 @@ export class UsersController {
     return await this.userService.getUser({ id });
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Post()
-  // async create(@Body() newUser: CreateUserDto) {
-  //   return await this.userService.createUser(newUser);
-  // }
-
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, UserAuthorizationGuard)
   @Patch(':ID')
   async updateUser(
     @Param('ID', ValidationObjectIdPipe) id: string,
     @Body() updatedUser: UpdateUserDto,
   ) {
     return await this.userService.updateUser({ id }, updatedUser);
+  }
+
+  @UseGuards(JwtAuthGuard, UserAuthorizationGuard)
+  @Delete(':ID')
+  async deleteUser(
+    @Param('ID', ValidationObjectIdPipe) id: string,
+    @Body() data: DeleteUserDto,
+  ) {
+    return await this.userService.deleteUser(id, data);
   }
 }

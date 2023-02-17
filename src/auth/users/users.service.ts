@@ -2,16 +2,21 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 
 import { PrismaService } from 'src/prisma.service';
-import { CreateUserDto, ExtendedUpdateUserDto, UpdateUserDto } from './dtos';
+import { CreateUserDto, DeleteUserDto, ExtendedUpdateUserDto } from './dtos';
 import { UsernameInUseException } from 'src/.shared/exceptions';
+import { BcryptService } from '../bcrypt/bcrypt.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly bcrypt: BcryptService,
+  ) {}
   async getFirstUserOrThrow(where: Prisma.UserWhereUniqueInput) {
     return this.prisma.user.findFirstOrThrow({ where });
   }
@@ -69,6 +74,56 @@ export class UsersService {
     } catch (error) {
       console.log(error);
       throw new ConflictException('Error actualizando al usuario');
+    }
+  }
+
+  async deleteUser(userId: string, { password }: DeleteUserDto) {
+    const { password: hashedPassword } = await this.getFirstUserOrThrow({
+      id: userId,
+    }).catch((error) => {
+      console.log(error);
+      throw new NotFoundException('Usuario no encontrado');
+    });
+
+    const isValidPassword = await this.bcrypt.validate(
+      password,
+      hashedPassword,
+    );
+
+    if (!isValidPassword) {
+      throw new UnauthorizedException('Las credenciales son inválidas');
+    }
+
+    const chatsWhichUserBelongTo = await this.prisma.chat.findMany({
+      where: { userIDs: { has: userId } },
+    });
+
+    const chatsUpdatedUsers = chatsWhichUserBelongTo.map((chat) => ({
+      ...chat,
+      userIDs: chat.userIDs.filter((id) => id !== userId),
+    }));
+
+    try {
+      const [deletedUser] = await this.prisma.$transaction(
+        [
+          this.prisma.user.delete({ where: { id: userId } }),
+          chatsUpdatedUsers.map((chat) =>
+            chat.userIDs.length
+              ? this.prisma.chat.update({
+                  where: { id: chat.id },
+                  data: { users: { disconnect: { id: userId } } },
+                })
+              : this.prisma.chat.delete({
+                  where: { id: chat.id },
+                }),
+          ),
+        ].flat(),
+      );
+
+      return deletedUser;
+    } catch (error) {
+      console.log(error);
+      throw new ConflictException('Error eliminando al usuario');
     }
   }
 }

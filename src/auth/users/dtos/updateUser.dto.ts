@@ -1,5 +1,5 @@
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsOptional } from 'class-validator';
+import { PartialType, PickType } from '@nestjs/swagger';
+import { IsBoolean, IsDate, IsDateString, IsOptional } from 'class-validator';
 
 import { CreateUserDto } from './createUser.dto';
 
@@ -21,4 +21,12 @@ export class ExtendedUpdateUserDto extends UpdateUserDto {
     },
   )
   lastConnection?: string;
+
+  @IsOptional()
+  @IsBoolean({ message: 'deleted debe ser un boolean' })
+  deleted?: boolean;
+
+  @IsOptional()
+  @IsDate({ message: 'deletedAt debe ser un Date' })
+  deletedAt?: Date | null;
 }
