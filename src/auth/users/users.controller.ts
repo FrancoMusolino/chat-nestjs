@@ -20,8 +20,14 @@ export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
   @Get(':ID')
-  async getUser(@Param('ID') id: string) {
+  async getUser(@Param('ID', ValidationObjectIdPipe) id: string) {
     return await this.userService.getUser({ id });
+  }
+
+  @UseGuards(JwtAuthGuard, UserAuthorizationGuard)
+  @Get(':ID/chats')
+  async getUserChats(@Param('ID', ValidationObjectIdPipe) id: string) {
+    return await this.userService.getUserChats({ id });
   }
 
   @UseGuards(JwtAuthGuard, UserAuthorizationGuard)

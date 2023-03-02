@@ -17,6 +17,7 @@ import {
 import { ExtendedCreateMessageDto } from './messages/dtos';
 import { MessagesService } from './messages/messages.service';
 import { UserDeletedException } from 'src/.shared/exceptions';
+import { DateTime } from 'src/.shared/helpers';
 
 @Injectable()
 export class ChatService {
@@ -69,6 +70,10 @@ export class ChatService {
     await this.getFirstChatOrThrow({ id: chatId }).catch((error) => {
       console.log(error);
       throw new NotFoundException(`Chat con id ${chatId} no encontrado`);
+    });
+
+    await this.updateChat(chatId, {
+      lastMessageSendingAt: DateTime.now().date,
     });
 
     return await this.messageService.createMessage({ chatId, ...message });

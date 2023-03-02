@@ -1,13 +1,23 @@
-import { IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUrl,
+  MaxLength,
+} from 'class-validator';
 import { IntersectionType } from '@nestjs/swagger';
 
 export class CreateChatDto {
   @IsNotEmpty({ message: 'title es un campo obligatorio' })
   @IsString({ message: 'title debe ser un string' })
+  @MaxLength(35, { message: 'title no puede tener más de 35 caracteres' })
   title: string;
 
   @IsOptional()
   @IsString({ message: 'description debe ser un string' })
+  @MaxLength(255, {
+    message: 'description no puede tener más de 35 caracteres',
+  })
   description?: string;
 
   @IsOptional()

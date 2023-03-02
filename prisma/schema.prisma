@@ -41,6 +41,7 @@ model Chat {
   avatar String? 
   createdBy String
   createdAt DateTime @default(now())
+  lastMessageSendingAt DateTime? @default(now())
 
   userIDs String[] @db.ObjectId
   users User[] @relation(fields: [userIDs], references: [id])

@@ -12,7 +12,7 @@ import { passwordRegExp } from 'src/.shared/utils';
 export class CreateUserDto {
   @IsString({ message: 'username debe ser un string' })
   @Length(3, 15, {
-    message: 'username debe tener entre 3 y 12 caracteres',
+    message: 'username debe tener entre 3 y 15 caracteres',
   })
   username: string;
 

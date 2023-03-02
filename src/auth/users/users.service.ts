@@ -38,6 +38,39 @@ export class UsersService {
     });
   }
 
+  async getUserChats(where: Prisma.UserWhereUniqueInput) {
+    const user = await this.prisma.user.findUnique({
+      where,
+      select: {
+        chats: {
+          orderBy: {
+            lastMessageSendingAt: 'desc',
+          },
+          select: {
+            id: true,
+            title: true,
+            avatar: true,
+            messages: {
+              take: 1,
+              orderBy: { createdAt: 'desc' },
+              select: {
+                content: true,
+                createdAt: true,
+                user: { select: { username: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    return user;
+  }
+
   async createUser({
     username,
     password,
