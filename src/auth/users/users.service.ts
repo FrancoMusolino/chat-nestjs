@@ -10,12 +10,14 @@ import { PrismaService } from 'src/prisma.service';
 import { CreateUserDto, DeleteUserDto, ExtendedUpdateUserDto } from './dtos';
 import { UsernameInUseException } from 'src/.shared/exceptions';
 import { BcryptService } from '../bcrypt/bcrypt.service';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly bcrypt: BcryptService,
+    private readonly cloudinary: CloudinaryService,
   ) {}
   async getFirstUserOrThrow(where: Prisma.UserWhereUniqueInput) {
     return this.prisma.user.findFirstOrThrow({ where });
@@ -92,7 +94,7 @@ export class UsersService {
     where: Prisma.UserWhereUniqueInput,
     data: ExtendedUpdateUserDto,
   ) {
-    await this.getFirstUserOrThrow(where).catch((error) => {
+    const existUser = await this.getFirstUserOrThrow(where).catch((error) => {
       console.log(error);
       throw new NotFoundException('Usuario no encontrado');
     });
@@ -102,6 +104,10 @@ export class UsersService {
         where,
         data,
       });
+
+      if (data.profilePicture) {
+        await this.cloudinary.deleteAsset(existUser.profilePicture);
+      }
 
       return user;
     } catch (error) {
