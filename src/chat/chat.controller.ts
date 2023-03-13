@@ -34,6 +34,12 @@ export class ChatController {
     return await this.chatService.getChat({ id: chatId });
   }
 
+  @UseGuards(ChatAuthorizationGuard)
+  @Get(':ID/mensajes')
+  async getChatMessages(@Param('ID', ValidationObjectIdPipe) chatId: string) {
+    return await this.chatService.getChatMessages({ id: chatId });
+  }
+
   @Post()
   async createChat(@Body() newChat: CreateChatDto, @Req() req: any) {
     const { user } = req;

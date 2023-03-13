@@ -44,6 +44,38 @@ export class ChatService {
     });
   }
 
+  async getChatMessages(where: Prisma.ChatWhereUniqueInput) {
+    const chat = await this.prisma.chat.findUnique({
+      where,
+      select: {
+        messages: {
+          orderBy: {
+            createdAt: 'asc',
+          },
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            deleted: true,
+            user: {
+              select: {
+                id: true,
+                username: true,
+                profilePicture: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!chat) {
+      throw new NotFoundException('Chat no encontrado');
+    }
+
+    return chat;
+  }
+
   async createChat({
     createdBy,
     title,
