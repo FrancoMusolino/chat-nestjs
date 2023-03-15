@@ -105,7 +105,7 @@ export class UsersService {
         data,
       });
 
-      if (data.profilePicture) {
+      if (data.profilePicture && existUser.profilePicture) {
         await this.cloudinary.deleteAsset(existUser.profilePicture);
       }
 
