@@ -25,6 +25,9 @@ export class MessagesService {
           chat: { connect: { id: chatId } },
           user: { connect: { id: userId } },
         },
+        include: {
+          user: true,
+        },
       });
     } catch (error) {
       console.log(error);

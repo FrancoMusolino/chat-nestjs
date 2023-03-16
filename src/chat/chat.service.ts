@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
+import { TriggerRecipientsTypeEnum } from '@novu/shared';
 
 import { PrismaService } from 'src/prisma.service';
 import { UsersService } from 'src/auth/users/users.service';
@@ -18,6 +19,8 @@ import { ExtendedCreateMessageDto } from './messages/dtos';
 import { MessagesService } from './messages/messages.service';
 import { UserDeletedException } from 'src/.shared/exceptions';
 import { DateTime } from 'src/.shared/helpers';
+import { NotificationService } from 'src/notification/notification.service';
+import { NotificationTypes } from 'src/notification/notificationTypes.enum';
 
 @Injectable()
 export class ChatService {
@@ -25,6 +28,7 @@ export class ChatService {
     private readonly prisma: PrismaService,
     private readonly userService: UsersService,
     private readonly messageService: MessagesService,
+    private readonly notification: NotificationService,
   ) {}
 
   async getFirstChatOrThrow(where: Prisma.ChatWhereUniqueInput) {
@@ -83,7 +87,7 @@ export class ChatService {
     avatar,
   }: ExtendedCreateChatDto) {
     try {
-      return await this.prisma.chat.create({
+      const createdChat = await this.prisma.chat.create({
         data: {
           title,
           description,
@@ -92,6 +96,21 @@ export class ChatService {
           users: { connect: { username: createdBy } },
         },
       });
+
+      const user = await this.userService.getUser(
+        { username: createdBy },
+        { chats: false, messages: false },
+      );
+
+      await this.notification.createTopic(
+        {
+          key: `chat-${createdChat.id}`,
+          name: `Chat ${createdChat.id} messages notifications`,
+        },
+        user.id,
+      );
+
+      return createdChat;
     } catch (error) {
       console.log(error);
       throw new ConflictException('Error al crear el chat');
@@ -99,16 +118,40 @@ export class ChatService {
   }
 
   async submitMessage({ chatId, ...message }: ExtendedCreateMessageDto) {
-    await this.getFirstChatOrThrow({ id: chatId }).catch((error) => {
-      console.log(error);
-      throw new NotFoundException(`Chat con id ${chatId} no encontrado`);
-    });
+    const chat = await this.getFirstChatOrThrow({ id: chatId }).catch(
+      (error) => {
+        console.log(error);
+        throw new NotFoundException(`Chat con id ${chatId} no encontrado`);
+      },
+    );
 
     await this.updateChat(chatId, {
       lastMessageSendingAt: DateTime.now().date,
     });
 
-    return await this.messageService.createMessage({ chatId, ...message });
+    const newMessage = await this.messageService.createMessage({
+      chatId,
+      ...message,
+    });
+
+    await this.notification.notificationTrigger(
+      NotificationTypes.MESSAGE_SENDED,
+      {
+        to: [
+          { type: TriggerRecipientsTypeEnum.TOPIC, topicKey: `chat-${chatId}` },
+        ],
+        payload: {
+          chatName: chat.title,
+          chatId: chat.id,
+          username: newMessage.user.username,
+        },
+        actor: {
+          subscriberId: newMessage.user.id,
+        },
+      },
+    );
+
+    return newMessage;
   }
 
   async addIntegrantToChat(
@@ -142,7 +185,7 @@ export class ChatService {
     }
 
     try {
-      return await this.prisma.chat.update({
+      const updatedChat = await this.prisma.chat.update({
         where: { id: chatId },
         data: {
           users: {
@@ -152,6 +195,20 @@ export class ChatService {
           },
         },
       });
+
+      await this.notification.notificationTrigger(
+        NotificationTypes.NEW_CHAT_INTEGRANT,
+        {
+          to: { subscriberId: user.id },
+          payload: { chatId, chatName: updatedChat.title },
+        },
+      );
+
+      await this.notification.addSubscriberToTopic(`chat-${updatedChat.id}`, {
+        subscribers: [user.id],
+      });
+
+      return updatedChat;
     } catch (error) {
       console.log(error);
       throw new ConflictException('Error al añadir el usuario al chat');
@@ -171,6 +228,10 @@ export class ChatService {
     const newChatIntegrants = chat.userIDs.filter((id) => id !== userId);
 
     try {
+      await this.notification.removeSubscribersFromTopic(`chat-${chatId}`, {
+        subscribers: [userId],
+      });
+
       if (!newChatIntegrants.length) {
         const newUserChats = user.chatIDs.filter((id) => id !== chatId);
 
@@ -229,10 +290,24 @@ export class ChatService {
     }
 
     try {
-      return await this.prisma.chat.update({
+      const updatedChat = await this.prisma.chat.update({
         where: { id: chatId },
         data: { users: { disconnect: { username: userToPushOut.username } } },
       });
+
+      await this.notification.notificationTrigger(
+        NotificationTypes.PUSHED_OUT_FROM_CHAT,
+        {
+          to: { subscriberId: userToPushOut.id },
+          payload: { chatName: updatedChat.title },
+        },
+      );
+
+      await this.notification.removeSubscribersFromTopic(`chat-${chatId}`, {
+        subscribers: [userToPushOut.id],
+      });
+
+      return updatedChat;
     } catch (error) {
       console.log(error);
       throw new ConflictException('Error al expulsar del chat');
@@ -289,6 +364,10 @@ export class ChatService {
           ),
         ].flat(),
       );
+
+      await this.notification.removeSubscribersFromTopic(`chat-${chatId}`, {
+        subscribers: chatIntegrants.map((integrant) => integrant.id),
+      });
 
       return deletedChat;
     } catch (error) {

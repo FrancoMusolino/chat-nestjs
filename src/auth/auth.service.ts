@@ -4,8 +4,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { JwtPayload } from 'src/.shared/types';
 
+import { JwtPayload } from 'src/.shared/types';
+import { NotificationService } from 'src/notification/notification.service';
 import { UserDeletedException } from './../.shared/exceptions';
 import { BcryptService } from './bcrypt/bcrypt.service';
 import { LoginDto, RegisterDto } from './dtos';
@@ -17,6 +18,7 @@ export class AuthService {
     private readonly userService: UsersService,
     private readonly jwt: JwtService,
     private readonly bcrypt: BcryptService,
+    private readonly notification: NotificationService,
   ) {}
 
   private signToken(payload: JwtPayload) {
@@ -25,6 +27,10 @@ export class AuthService {
 
   async register({ username, password }: RegisterDto) {
     const user = await this.userService.createUser({ username, password });
+
+    await this.notification.addSubscriber(user.id, {
+      data: { username: user.username },
+    });
 
     const { password: hashPassword, ...rest } = user;
 
@@ -35,7 +41,10 @@ export class AuthService {
   }
 
   async login({ username, password }: LoginDto) {
-    const existUser = await this.userService.getUser({ username });
+    const existUser = await this.userService.getUser(
+      { username },
+      { chats: false, messages: false },
+    );
 
     if (!existUser) {
       throw new NotFoundException(`Usuario ${username} no encontrado`);

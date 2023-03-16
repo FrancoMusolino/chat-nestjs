@@ -11,6 +11,7 @@ import { CreateUserDto, DeleteUserDto, ExtendedUpdateUserDto } from './dtos';
 import { UsernameInUseException } from 'src/.shared/exceptions';
 import { BcryptService } from '../bcrypt/bcrypt.service';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class UsersService {
@@ -18,15 +19,19 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly bcrypt: BcryptService,
     private readonly cloudinary: CloudinaryService,
+    private readonly notification: NotificationService,
   ) {}
   async getFirstUserOrThrow(where: Prisma.UserWhereUniqueInput) {
     return this.prisma.user.findFirstOrThrow({ where });
   }
 
-  async getUser(where: Prisma.UserWhereUniqueInput) {
+  async getUser(
+    where: Prisma.UserWhereUniqueInput,
+    include: Prisma.UserInclude = { chats: true, messages: true },
+  ) {
     return await this.prisma.user.findUnique({
       where,
-      include: { chats: true, messages: true },
+      include,
     });
   }
 
@@ -158,6 +163,8 @@ export class UsersService {
           ),
         ].flat(),
       );
+
+      await this.notification.removeSubscriber(deletedUser.id);
 
       return deletedUser;
     } catch (error) {
