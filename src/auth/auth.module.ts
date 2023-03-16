@@ -8,6 +8,7 @@ import { AuthService } from './auth.service';
 import { BcryptService } from './bcrypt/bcrypt.service';
 import { JwtStrategy } from './jwt.strategy';
 import { UsersModule } from './users/users.module';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Module({
   imports: [
@@ -22,6 +23,6 @@ import { UsersModule } from './users/users.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, BcryptService],
+  providers: [AuthService, JwtStrategy, BcryptService, NotificationService],
 })
 export class AuthModule {}
