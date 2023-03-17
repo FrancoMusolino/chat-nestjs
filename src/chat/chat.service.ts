@@ -134,6 +134,10 @@ export class ChatService {
       ...message,
     });
 
+    const { content } = newMessage;
+
+    const slicedContent = content.slice(0, 25);
+
     await this.notification.notificationTrigger(
       NotificationTypes.MESSAGE_SENDED,
       {
@@ -144,6 +148,7 @@ export class ChatService {
           chatName: chat.title,
           chatId: chat.id,
           username: newMessage.user.username,
+          content: content.length > 25 ? `${slicedContent}...` : slicedContent,
         },
         actor: {
           subscriberId: newMessage.user.id,
