@@ -80,6 +80,31 @@ export class ChatService {
     return chat;
   }
 
+  async getChatIntegrants(where: Prisma.ChatWhereUniqueInput) {
+    const chat = await this.prisma.chat.findUnique({
+      where,
+      select: {
+        createdBy: true,
+        users: {
+          select: {
+            id: true,
+            username: true,
+            profilePicture: true,
+            status: true,
+            connected: true,
+            lastConnection: true,
+          },
+        },
+      },
+    });
+
+    if (!chat) {
+      throw new NotFoundException('Chat no encontrado');
+    }
+
+    return chat;
+  }
+
   async createChat({
     createdBy,
     title,
