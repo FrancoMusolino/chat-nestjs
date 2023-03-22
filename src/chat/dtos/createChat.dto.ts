@@ -16,7 +16,7 @@ export class CreateChatDto {
   @IsOptional()
   @IsString({ message: 'description debe ser un string' })
   @MaxLength(255, {
-    message: 'description no puede tener más de 35 caracteres',
+    message: 'description no puede tener más de 255 caracteres',
   })
   description?: string;
 

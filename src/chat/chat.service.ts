@@ -37,14 +37,13 @@ export class ChatService {
     });
   }
 
-  async getChat(where: Prisma.ChatWhereUniqueInput) {
+  async getChat(
+    where: Prisma.ChatWhereUniqueInput,
+    include?: Prisma.ChatInclude,
+  ) {
     return await this.prisma.chat.findUnique({
       where,
-      include: {
-        messages: true,
-        users: { select: { id: true, username: true, profilePicture: true } },
-        _count: { select: { users: true } },
-      },
+      include,
     });
   }
 
