@@ -56,6 +56,9 @@ export class UsersService {
           select: {
             id: true,
             title: true,
+            createdAt: true,
+            createdBy: true,
+            description: true,
             avatar: true,
             messages: {
               take: 1,
