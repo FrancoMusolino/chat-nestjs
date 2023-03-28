@@ -21,6 +21,7 @@ import { UserDeletedException } from 'src/.shared/exceptions';
 import { DateTime } from 'src/.shared/helpers';
 import { NotificationService } from 'src/notification/notification.service';
 import { NotificationTypes } from 'src/notification/notificationTypes.enum';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class ChatService {
@@ -29,6 +30,7 @@ export class ChatService {
     private readonly userService: UsersService,
     private readonly messageService: MessagesService,
     private readonly notification: NotificationService,
+    private readonly cloudinary: CloudinaryService,
   ) {}
 
   async getFirstChatOrThrow(where: Prisma.ChatWhereUniqueInput) {
@@ -272,6 +274,8 @@ export class ChatService {
           }),
         ]);
 
+        if (chat.avatar) await this.cloudinary.deleteAsset(chat.avatar);
+
         return chat;
       }
 
@@ -344,16 +348,24 @@ export class ChatService {
   }
 
   async updateChat(chatId: string, data: UpdateChatDto) {
-    await this.getFirstChatOrThrow({ id: chatId }).catch((error) => {
-      console.log(error);
-      throw new NotFoundException(`Chat con id ${chatId} no encontrado`);
-    });
+    const chat = await this.getFirstChatOrThrow({ id: chatId }).catch(
+      (error) => {
+        console.log(error);
+        throw new NotFoundException(`Chat con id ${chatId} no encontrado`);
+      },
+    );
 
     try {
-      return await this.prisma.chat.update({
+      const updatedChat = await this.prisma.chat.update({
         where: { id: chatId },
         data,
       });
+
+      if (data.avatar && chat.avatar) {
+        this.cloudinary.deleteAsset(chat.avatar);
+      }
+
+      return updatedChat;
     } catch (error) {
       console.log(error);
       throw new ConflictException('Error al actualizar el chat');
@@ -393,6 +405,8 @@ export class ChatService {
           ),
         ].flat(),
       );
+
+      if (chat.avatar) await this.cloudinary.deleteAsset(chat.avatar);
 
       await this.notification.removeSubscribersFromTopic(`chat-${chatId}`, {
         subscribers: chatIntegrants.map((integrant) => integrant.id),
