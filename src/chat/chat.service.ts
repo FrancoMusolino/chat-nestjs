@@ -22,6 +22,7 @@ import { DateTime } from 'src/.shared/helpers';
 import { NotificationService } from 'src/notification/notification.service';
 import { NotificationTypes } from 'src/notification/notificationTypes.enum';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { QueryFilter } from 'src/.shared/types';
 
 @Injectable()
 export class ChatService {
@@ -49,14 +50,33 @@ export class ChatService {
     });
   }
 
-  async getChatMessages(where: Prisma.ChatWhereUniqueInput) {
+  async getChatMessages(
+    where: Prisma.ChatWhereUniqueInput,
+    take?: number,
+    skip?: number,
+  ) {
+    const filter: QueryFilter = {};
+
+    const queryWithFilter = !isNaN(take) && !isNaN(skip);
+
+    if (queryWithFilter) {
+      filter.take = take;
+      filter.skip = skip;
+    }
+
     const chat = await this.prisma.chat.findUnique({
       where,
       select: {
+        _count: {
+          select: {
+            messages: true,
+          },
+        },
         messages: {
           orderBy: {
-            createdAt: 'asc',
+            createdAt: 'desc',
           },
+          ...filter,
           select: {
             id: true,
             content: true,
@@ -78,7 +98,15 @@ export class ChatService {
       throw new NotFoundException('Chat no encontrado');
     }
 
-    return chat;
+    const {
+      _count: { messages },
+      ...rest
+    } = chat;
+
+    return {
+      ...rest,
+      hasNextPage: queryWithFilter ? messages > skip + take : false,
+    };
   }
 
   async getChatIntegrants(where: Prisma.ChatWhereUniqueInput) {

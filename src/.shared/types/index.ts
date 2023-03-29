@@ -7,3 +7,8 @@ export type JwtPayload = {
 };
 
 export type SocketWithAuth = Socket & { user: Omit<User, 'password'> };
+
+export type QueryFilter = {
+  take?: number;
+  skip?: number;
+};

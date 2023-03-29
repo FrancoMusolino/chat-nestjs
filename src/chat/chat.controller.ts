@@ -9,6 +9,7 @@ import {
   Patch,
   Delete,
   Get,
+  Query,
 } from '@nestjs/common';
 
 import { ChatService } from './chat.service';
@@ -36,8 +37,12 @@ export class ChatController {
 
   @UseGuards(ChatAuthorizationGuard)
   @Get(':ID/mensajes')
-  async getChatMessages(@Param('ID', ValidationObjectIdPipe) chatId: string) {
-    return await this.chatService.getChatMessages({ id: chatId });
+  async getChatMessages(
+    @Param('ID', ValidationObjectIdPipe) chatId: string,
+    @Query('take') take?: number,
+    @Query('skip') skip?: number,
+  ) {
+    return await this.chatService.getChatMessages({ id: chatId }, +take, +skip);
   }
 
   @UseGuards(ChatAuthorizationGuard)
