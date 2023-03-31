@@ -9,6 +9,7 @@ import {
   OnGatewayDisconnect,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { Message } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 
 import { DateTime } from 'src/.shared/helpers';
@@ -16,7 +17,6 @@ import { ValidationObjectIdPipe } from 'src/.shared/pipes';
 import { SocketWithAuth } from 'src/.shared/types';
 import { UsersService } from 'src/auth/users/users.service';
 import { ChatAuthorizationGuard } from './guards';
-import { ExtendedCreateMessageDto } from './messages/dtos';
 
 @WebSocketGateway(8080)
 export class ChatGateway
@@ -74,14 +74,15 @@ export class ChatGateway
   }
 
   @UseGuards(ChatAuthorizationGuard)
-  @SubscribeMessage('event_message')
+  @SubscribeMessage('event_submit_message')
   handleIncomingMessage(
-    @MessageBody() newMessage: ExtendedCreateMessageDto,
+    @MessageBody() newMessage: Message,
     @ConnectedSocket() client: Socket,
   ) {
     const { chatId } = newMessage;
 
-    // TODO: agregamos broadcast al client?? / El evento lo emite el server o el client??
-    this.server.to(`chat_${chatId}`).emit('new_message', newMessage);
+    client.broadcast
+      .to(`chat_${chatId}`)
+      .emit('event_receive_message', newMessage);
   }
 }
