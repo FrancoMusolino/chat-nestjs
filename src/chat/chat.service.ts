@@ -156,7 +156,7 @@ export class ChatService {
         { chats: false, messages: false },
       );
 
-      await this.notification.createTopic(
+      this.notification.createTopic(
         {
           key: `chat-${createdChat.id}`,
           name: `Chat ${createdChat.id} messages notifications`,
@@ -192,23 +192,20 @@ export class ChatService {
 
     const slicedContent = content.slice(0, 25);
 
-    await this.notification.notificationTrigger(
-      NotificationTypes.MESSAGE_SENDED,
-      {
-        to: [
-          { type: TriggerRecipientsTypeEnum.TOPIC, topicKey: `chat-${chatId}` },
-        ],
-        payload: {
-          chatName: chat.title,
-          chatId: chat.id,
-          username: newMessage.user.username,
-          content: content.length > 25 ? `${slicedContent}...` : slicedContent,
-        },
-        actor: {
-          subscriberId: newMessage.user.id,
-        },
+    this.notification.notificationTrigger(NotificationTypes.MESSAGE_SENDED, {
+      to: [
+        { type: TriggerRecipientsTypeEnum.TOPIC, topicKey: `chat-${chatId}` },
+      ],
+      payload: {
+        chatName: chat.title,
+        chatId: chat.id,
+        username: newMessage.user.username,
+        content: content.length > 25 ? `${slicedContent}...` : slicedContent,
       },
-    );
+      actor: {
+        subscriberId: newMessage.user.id,
+      },
+    });
 
     return newMessage;
   }
@@ -255,7 +252,7 @@ export class ChatService {
         },
       });
 
-      await this.notification.notificationTrigger(
+      this.notification.notificationTrigger(
         NotificationTypes.NEW_CHAT_INTEGRANT,
         {
           to: { subscriberId: user.id },
@@ -263,7 +260,7 @@ export class ChatService {
         },
       );
 
-      await this.notification.addSubscriberToTopic(`chat-${updatedChat.id}`, {
+      this.notification.addSubscriberToTopic(`chat-${updatedChat.id}`, {
         subscribers: [user.id],
       });
 
@@ -287,7 +284,7 @@ export class ChatService {
     const newChatIntegrants = chat.userIDs.filter((id) => id !== userId);
 
     try {
-      await this.notification.removeSubscribersFromTopic(`chat-${chatId}`, {
+      this.notification.removeSubscribersFromTopic(`chat-${chatId}`, {
         subscribers: [userId],
       });
 
@@ -356,7 +353,7 @@ export class ChatService {
         data: { users: { disconnect: { username: userToPushOut.username } } },
       });
 
-      await this.notification.notificationTrigger(
+      this.notification.notificationTrigger(
         NotificationTypes.PUSHED_OUT_FROM_CHAT,
         {
           to: { subscriberId: userToPushOut.id },
@@ -364,7 +361,7 @@ export class ChatService {
         },
       );
 
-      await this.notification.removeSubscribersFromTopic(`chat-${chatId}`, {
+      this.notification.removeSubscribersFromTopic(`chat-${chatId}`, {
         subscribers: [userToPushOut.id],
       });
 
@@ -436,7 +433,7 @@ export class ChatService {
 
       if (chat.avatar) await this.cloudinary.deleteAsset(chat.avatar);
 
-      await this.notification.removeSubscribersFromTopic(`chat-${chatId}`, {
+      this.notification.removeSubscribersFromTopic(`chat-${chatId}`, {
         subscribers: chatIntegrants.map((integrant) => integrant.id),
       });
 
