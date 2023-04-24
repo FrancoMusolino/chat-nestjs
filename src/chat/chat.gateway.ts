@@ -77,12 +77,39 @@ export class ChatGateway
   @SubscribeMessage('event_submit_message')
   handleIncomingMessage(
     @MessageBody() newMessage: Message,
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: SocketWithAuth,
   ) {
     const { chatId } = newMessage;
 
     client.broadcast
       .to(`chat_${chatId}`)
       .emit('event_receive_message', newMessage);
+
+    this.handleLastChatMessage(client, newMessage);
+  }
+
+  handleLastChatMessage(emmiter: SocketWithAuth, message: Message) {
+    const { chatId, content, createdAt } = message;
+
+    const chatIntegrants = Array.from(this.server.sockets.sockets)
+      .map((client) => client[1])
+      .filter(
+        (client: SocketWithAuth) =>
+          client.user.chatIDs.includes(chatId) &&
+          !client.rooms.has(`chat_${chatId}`),
+      );
+
+    const room = `last_message_in_chat_${chatId}`;
+
+    chatIntegrants.forEach((client) => client.join(room));
+
+    emmiter.broadcast.to(room).emit('event_new_last_message', {
+      chatId,
+      content,
+      createdAt,
+      user: { username: emmiter.user.username },
+    });
+
+    chatIntegrants.forEach((client) => client.leave(room));
   }
 }
