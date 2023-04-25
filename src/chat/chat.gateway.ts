@@ -112,4 +112,36 @@ export class ChatGateway
 
     chatIntegrants.forEach((client) => client.leave(room));
   }
+
+  @UseGuards(ChatAuthorizationGuard)
+  @SubscribeMessage('event_add_integrant')
+  handleAddChatIntegrant(
+    @MessageBody() payload: { chatId: string; username: string },
+  ) {
+    const { username } = payload;
+
+    const user = Array.from(this.server.sockets.sockets)
+      .map((client) => client[1])
+      .find((client: SocketWithAuth) => client.user.username === username);
+
+    if (user) {
+      this.server.to(user.id).emit('event_added_to_chat');
+    }
+  }
+
+  @UseGuards(ChatAuthorizationGuard)
+  @SubscribeMessage('event_push_out_integrant')
+  handlePushOutIntegrant(
+    @MessageBody() payload: { chatId: string; username: string },
+  ) {
+    const { username, chatId } = payload;
+
+    const user = Array.from(this.server.sockets.sockets)
+      .map((client) => client[1])
+      .find((client: SocketWithAuth) => client.user.username === username);
+
+    if (user) {
+      this.server.to(user.id).emit('event_pushed_out_chat', { chatId });
+    }
+  }
 }
