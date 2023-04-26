@@ -16,7 +16,7 @@ import { DateTime } from 'src/.shared/helpers';
 import { ValidationObjectIdPipe } from 'src/.shared/pipes';
 import { SocketWithAuth } from 'src/.shared/types';
 import { UsersService } from 'src/auth/users/users.service';
-import { ChatAuthorizationGuard } from './guards';
+import { ChatAuthorizationGuard } from './guards/chatAuthorization.guard';
 
 @WebSocketGateway(8080)
 export class ChatGateway

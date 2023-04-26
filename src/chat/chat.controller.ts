@@ -15,7 +15,7 @@ import {
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { ValidationObjectIdPipe } from 'src/.shared/pipes';
-import { ChatAuthorizationGuard } from './guards';
+import { ChatAuthorizationGuard } from './guards/chatAuthorization.guard';
 import {
   AddIntegrantToChatDto,
   CreateChatDto,
