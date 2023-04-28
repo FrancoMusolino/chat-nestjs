@@ -1,9 +1,0 @@
-{
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "public/main.ts",
-      "methods": ["GET", "POST", "PUT", "PATCH", "DELETE"]
-    }
-  ]
-}
